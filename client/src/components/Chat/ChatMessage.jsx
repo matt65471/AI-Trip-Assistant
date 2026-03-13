@@ -1,5 +1,6 @@
 export default function ChatMessage({ message }) {
-  const isUser = message.role === 'user';
+  const isUser = message?.role === 'user';
+  const content = message?.content ?? message?.message ?? '';
 
   return (
     <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
@@ -28,7 +29,7 @@ export default function ChatMessage({ message }) {
             : 'bg-gray-100 text-gray-800 rounded-tl-none'
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <p className="text-sm whitespace-pre-wrap">{content}</p>
       </div>
     </div>
   );

@@ -138,7 +138,7 @@ async function chat(message, tripContext, conversationHistory = []) {
     { role: 'system', content: SYSTEM_PROMPT + contextPrompt },
     ...conversationHistory.map(msg => ({
       role: msg.role,
-      content: msg.content
+      content: typeof (msg.content ?? msg.message) === 'string' ? (msg.content ?? msg.message) : ''
     })),
     { role: 'user', content: message }
   ];
@@ -150,8 +150,11 @@ async function chat(message, tripContext, conversationHistory = []) {
       temperature: 0.7,
     });
 
+    const rawContent = completion.choices[0]?.message?.content;
+    const content = typeof rawContent === 'string' ? rawContent : 'I couldn\'t generate a response. Please try again.';
+
     return {
-      message: completion.choices[0].message.content,
+      message: content,
       role: 'assistant'
     };
   } catch (error) {

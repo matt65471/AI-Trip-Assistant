@@ -95,3 +95,11 @@ AI-Trip-Assistant/
 ## License
 
 ISC
+
+
+
+# TO DO:
+Fix ask function
+Fix generate so you don't poll it multiple times for no reason
+Is it worth to have seperate APIs for things like Airbnb or a web scalper?
+- See if LLM can actually generate correct, up to date information

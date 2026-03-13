@@ -68,7 +68,10 @@ export default function Chat() {
 
         dispatch({
           type: 'ADD_CHAT_MESSAGE',
-          payload: response
+          payload: {
+            role: response.role || 'assistant',
+            content: response.message ?? response.content ?? 'Sorry, I couldn\'t generate a response. Please try again.'
+          }
         });
       }
     } catch (error) {
