@@ -6,6 +6,7 @@ import DestinationStep from './DestinationStep';
 import DatesStep from './DatesStep';
 import PreferencesStep from './PreferencesStep';
 import TravelersStep from './TravelersStep';
+import AIHelpStep from './AIHelpStep';
 import ErrorMessage from '../ErrorMessage';
 import LoadingSpinner from '../LoadingSpinner';
 
@@ -14,6 +15,7 @@ const STEPS = [
   { id: 'dates', title: 'Travel Dates', component: DatesStep },
   { id: 'preferences', title: 'Preferences', component: PreferencesStep },
   { id: 'travelers', title: 'Travelers', component: TravelersStep },
+  { id: 'aiHelp', title: 'AI Help', component: AIHelpStep },
 ];
 
 export default function TripForm() {

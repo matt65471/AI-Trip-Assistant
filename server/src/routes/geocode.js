@@ -44,6 +44,37 @@ async function validateLocation(address) {
   return { valid: true, formattedAddress: first.formatted_address };
 }
 
+async function getCoordinates(address) {
+  const key = getGeocodingKey();
+  if (!key) return null;
+  if (!address || typeof address !== 'string' || !address.trim()) return null;
+  const url = `${GEOCODE_URL}?address=${encodeURIComponent(address.trim())}&key=${key}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  if (data.status !== 'OK' || !data.results?.[0]?.geometry?.location) return null;
+  const { lat, lng } = data.results[0].geometry.location;
+  return { lat, lng };
+}
+
+router.post('/coordinates', async (req, res) => {
+  try {
+    const { places } = req.body;
+    if (!Array.isArray(places) || places.length === 0) {
+      return res.status(400).json({ error: 'places array is required' });
+    }
+    const results = [];
+    for (const place of places) {
+      if (!place || typeof place !== 'string' || !place.trim()) continue;
+      const coords = await getCoordinates(place);
+      results.push({ place: place.trim(), lat: coords?.lat, lng: coords?.lng });
+    }
+    res.json(results);
+  } catch (error) {
+    console.error('Geocode coordinates error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get coordinates' });
+  }
+});
+
 router.post('/validate', async (req, res) => {
   try {
     const { address } = req.body;

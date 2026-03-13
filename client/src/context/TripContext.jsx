@@ -16,7 +16,8 @@ const initialState = {
     travelers: {
       count: 1,
       notes: ''
-    }
+    },
+    aiHelpLevel: 'balanced'
   },
   itinerary: null,
   itineraryBuildingMode: false,

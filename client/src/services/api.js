@@ -64,6 +64,20 @@ export async function refineItinerary(itinerary, feedback) {
   return handleResponse(response);
 }
 
+export async function getPlaceCoordinates(places) {
+  if (!Array.isArray(places) || places.length === 0) return [];
+  const response = await fetch(`${API_BASE}/geocode/coordinates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ places }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to get coordinates');
+  }
+  return response.json();
+}
+
 export async function validateLocation(address) {
   if (!address || !address.trim()) {
     throw new Error('Address is required');

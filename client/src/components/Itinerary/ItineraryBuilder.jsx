@@ -7,6 +7,7 @@ import {
   getSlotValue,
 } from '../../utils/itinerarySkeleton';
 import LoadingSpinner from '../LoadingSpinner';
+import TripMap from './TripMap';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
@@ -182,6 +183,13 @@ export default function ItineraryBuilder() {
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+      <div className="mb-4">
+        <TripMap
+          startingLocation={requirements.startingLocation}
+          destinations={requirements.destinations}
+          height={200}
+        />
+      </div>
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">
           Build your itinerary

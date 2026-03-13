@@ -94,6 +94,7 @@ AI-Trip-Assistant/
 | `/api/trip/plan` | POST | Generate itinerary from requirements |
 | `/api/trip/generate-slot` | POST | Generate a single itinerary slot (activity, meal, etc.) |
 | `/api/geocode/validate` | POST | Validate a location via Google Geocoding (body: `{ address }`) |
+| `/api/geocode/coordinates` | POST | Get lat/lng for multiple places for map (body: `{ places: string[] }`) |
 | `/api/chat` | POST | Send message to AI assistant |
 | `/api/trip/refine` | POST | Update itinerary based on feedback |
 

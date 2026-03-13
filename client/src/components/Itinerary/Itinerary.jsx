@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTrip, useTripDispatch } from '../../context/TripContext';
 import DayCard from './DayCard';
 import ItinerarySummary from './ItinerarySummary';
+import TripMap from './TripMap';
 
 export default function Itinerary() {
   const { itinerary, requirements } = useTrip();
@@ -34,6 +35,18 @@ export default function Itinerary() {
         </div>
 
         <ItinerarySummary itinerary={itinerary} />
+      </div>
+
+      {/* Trip map */}
+      <div className="bg-white rounded-2xl shadow-xl p-6">
+        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">🗺️</span>
+          Your trip map
+        </h3>
+        <TripMap
+          startingLocation={requirements.startingLocation}
+          destinations={requirements.destinations}
+        />
       </div>
 
       {/* Day-by-day itinerary */}
