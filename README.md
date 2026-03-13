@@ -19,8 +19,9 @@ An AI-powered trip planning assistant that helps you create personalized travel 
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - OpenAI API key
+- Google Geocoding API key (for starting location and destination validation). Enable the Geocoding API in [Google Cloud Console](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com).
 
 ### Installation
 
@@ -45,7 +46,9 @@ npm install
 ```bash
 cd server
 cp .env.example .env
-# Edit .env and add your OpenAI API key
+# Edit .env and add:
+# - OPENAI_API_KEY=your-openai-key
+# - GOOGLE_GEOCODING_API_KEY=your-google-geocoding-key  (for location validation)
 ```
 
 4. Start the development servers:
@@ -89,6 +92,8 @@ AI-Trip-Assistant/
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/trip/plan` | POST | Generate itinerary from requirements |
+| `/api/trip/generate-slot` | POST | Generate a single itinerary slot (activity, meal, etc.) |
+| `/api/geocode/validate` | POST | Validate a location via Google Geocoding (body: `{ address }`) |
 | `/api/chat` | POST | Send message to AI assistant |
 | `/api/trip/refine` | POST | Update itinerary based on feedback |
 

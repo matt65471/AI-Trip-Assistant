@@ -20,8 +20,8 @@ export default function DayCard({ day, isExpanded, onToggle }) {
 
   const dayTotal = [
     day.accommodation?.estimatedCost || 0,
-    ...(day.activities?.map(a => a.estimatedCost || 0) || []),
-    ...(day.meals?.map(m => m.estimatedCost || 0) || []),
+    ...(day.activities?.filter(Boolean).map(a => a.estimatedCost || 0) || []),
+    ...(day.meals?.filter(Boolean).map(m => m.estimatedCost || 0) || []),
     day.transportation?.estimatedCost || 0
   ].reduce((sum, cost) => sum + cost, 0);
 
@@ -87,13 +87,13 @@ export default function DayCard({ day, isExpanded, onToggle }) {
           )}
 
           {/* Activities */}
-          {day.activities && day.activities.length > 0 && (
+          {day.activities?.filter(Boolean).length > 0 && (
             <div>
               <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <span>🎯</span> Activities
               </h4>
               <div className="space-y-3">
-                {day.activities.map((activity, index) => (
+                {day.activities.filter(Boolean).map((activity, index) => (
                   <div key={index} className="bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between items-start mb-1">
                       <div className="flex items-center gap-2">
@@ -138,13 +138,13 @@ export default function DayCard({ day, isExpanded, onToggle }) {
           )}
 
           {/* Meals */}
-          {day.meals && day.meals.length > 0 && (
+          {day.meals?.filter(Boolean).length > 0 && (
             <div>
               <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
                 <span>🍽️</span> Meals
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {day.meals.map((meal, index) => (
+                {day.meals.filter(Boolean).map((meal, index) => (
                   <div key={index} className="bg-orange-50 rounded-xl p-3">
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-medium text-orange-600 uppercase">{meal.type}</span>

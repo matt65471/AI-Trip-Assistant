@@ -1,9 +1,10 @@
 import { useTrip } from '../context/TripContext';
 import TripForm from './TripForm/TripForm';
 import Itinerary from './Itinerary/Itinerary';
+import ItineraryBuilder from './Itinerary/ItineraryBuilder';
 
 export default function TripPlanner() {
-  const { itinerary } = useTrip();
+  const { itinerary, itineraryBuildingMode } = useTrip();
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8 max-w-4xl">
@@ -20,6 +21,8 @@ export default function TripPlanner() {
       <div>
         {!itinerary ? (
           <TripForm />
+        ) : itineraryBuildingMode ? (
+          <ItineraryBuilder />
         ) : (
           <Itinerary />
         )}

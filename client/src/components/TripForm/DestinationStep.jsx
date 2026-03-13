@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTrip, useTripDispatch } from '../../context/TripContext';
+import { validateLocation } from '../../services/api';
 
 const POPULAR_DESTINATIONS = [
   'Paris, France',
@@ -16,17 +17,60 @@ export default function DestinationStep() {
   const { requirements } = useTrip();
   const dispatch = useTripDispatch();
   const [inputValue, setInputValue] = useState('');
+  const [startingLocationError, setStartingLocationError] = useState('');
+  const [startingLocationValidating, setStartingLocationValidating] = useState(false);
+  const [destinationError, setDestinationError] = useState('');
+  const [destinationValidating, setDestinationValidating] = useState(false);
 
-  const addDestination = (destination) => {
-    if (destination && !requirements.destinations.includes(destination)) {
-      dispatch({
-        type: 'SET_REQUIREMENTS',
-        payload: {
-          destinations: [...requirements.destinations, destination]
-        }
-      });
+  const handleStartingLocationBlur = async () => {
+    const value = (requirements.startingLocation || '').trim();
+    if (!value) {
+      setStartingLocationError('');
+      return;
     }
-    setInputValue('');
+    setStartingLocationError('');
+    setStartingLocationValidating(true);
+    try {
+      const { valid, formattedAddress } = await validateLocation(value);
+      if (valid && formattedAddress) {
+        dispatch({ type: 'SET_REQUIREMENTS', payload: { startingLocation: formattedAddress } });
+      } else {
+        setStartingLocationError('We couldn\'t find this location. Please check the name.');
+      }
+    } catch (err) {
+      setStartingLocationError(err.message || 'Failed to validate location.');
+    } finally {
+      setStartingLocationValidating(false);
+    }
+  };
+
+  const addDestination = async (destination) => {
+    const trimmed = typeof destination === 'string' ? destination.trim() : '';
+    if (!trimmed || requirements.destinations.includes(trimmed)) {
+      setInputValue('');
+      return;
+    }
+    setDestinationError('');
+    setDestinationValidating(true);
+    try {
+      const { valid, formattedAddress } = await validateLocation(trimmed);
+      if (valid && formattedAddress) {
+        const toAdd = formattedAddress;
+        if (!requirements.destinations.includes(toAdd)) {
+          dispatch({
+            type: 'SET_REQUIREMENTS',
+            payload: { destinations: [...requirements.destinations, toAdd] }
+          });
+        }
+        setInputValue('');
+      } else {
+        setDestinationError('We couldn\'t find this location. Please check the name.');
+      }
+    } catch (err) {
+      setDestinationError(err.message || 'Failed to validate location.');
+    } finally {
+      setDestinationValidating(false);
+    }
   };
 
   const removeDestination = (destination) => {
@@ -41,7 +85,7 @@ export default function DestinationStep() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addDestination(inputValue.trim());
+      addDestination(inputValue);
     }
   };
 
@@ -62,15 +106,26 @@ export default function DestinationStep() {
         <input
           type="text"
           value={requirements.startingLocation || ''}
-          onChange={(e) =>
+          onChange={(e) => {
             dispatch({
               type: 'SET_REQUIREMENTS',
               payload: { startingLocation: e.target.value }
-            })
-          }
+            });
+            setStartingLocationError('');
+          }}
+          onBlur={handleStartingLocationBlur}
           placeholder="City or airport (e.g. New York, USA)"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all ${
+            startingLocationError ? 'border-red-500' : 'border-gray-300'
+          }`}
+          disabled={startingLocationValidating}
         />
+        {startingLocationValidating && (
+          <p className="mt-1.5 text-sm text-gray-500">Checking location...</p>
+        )}
+        {startingLocationError && (
+          <p className="mt-1.5 text-sm text-red-600">{startingLocationError}</p>
+        )}
       </div>
 
       {/* Input field */}
@@ -78,19 +133,28 @@ export default function DestinationStep() {
         <input
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            setDestinationError('');
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Type a city or country..."
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all ${
+            destinationError ? 'border-red-500' : 'border-gray-300'
+          }`}
+          disabled={destinationValidating}
         />
         <button
-          onClick={() => addDestination(inputValue.trim())}
-          disabled={!inputValue.trim()}
+          onClick={() => addDestination(inputValue)}
+          disabled={!inputValue.trim() || destinationValidating}
           className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          Add
+          {destinationValidating ? '...' : 'Add'}
         </button>
       </div>
+      {destinationError && (
+        <p className="mb-4 text-sm text-red-600">{destinationError}</p>
+      )}
 
       {/* Selected destinations */}
       {requirements.destinations.length > 0 && (

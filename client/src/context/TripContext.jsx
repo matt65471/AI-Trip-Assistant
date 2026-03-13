@@ -10,14 +10,16 @@ const initialState = {
     startDate: '',
     endDate: '',
     budget: 'moderate',
-    travelMethod: 'flight',
-    accommodation: 'hotel',
+    travelToDestination: [''],
+    travelAtDestination: [''],
+    accommodations: [''],
     travelers: {
       count: 1,
       notes: ''
     }
   },
   itinerary: null,
+  itineraryBuildingMode: false,
   chatHistory: [],
   currentStep: 0,
   isLoading: false,
@@ -37,6 +39,32 @@ function tripReducer(state, action) {
         itinerary: action.payload,
         isLoading: false
       };
+    case 'SET_ITINERARY_BUILDING':
+      return {
+        ...state,
+        itineraryBuildingMode: action.payload
+      };
+    case 'UPDATE_ITINERARY_SLOT': {
+      const { dayIndex, slotType, slotIndex, value } = action.payload;
+      const days = [...(state.itinerary?.days || [])];
+      const day = { ...days[dayIndex] };
+      if (slotType === 'accommodation') day.accommodation = value;
+      else if (slotType === 'transportation') day.transportation = value;
+      else if (slotType === 'activity') {
+        const activities = [...(day.activities || [])];
+        activities[slotIndex] = value;
+        day.activities = activities;
+      } else if (slotType === 'meal') {
+        const meals = [...(day.meals || [])];
+        meals[slotIndex] = value;
+        day.meals = meals;
+      }
+      days[dayIndex] = day;
+      return {
+        ...state,
+        itinerary: { ...state.itinerary, days }
+      };
+    }
     case 'ADD_CHAT_MESSAGE':
       return {
         ...state,
@@ -64,7 +92,7 @@ function tripReducer(state, action) {
         isLoading: false
       };
     case 'RESET':
-      return initialState;
+      return { ...initialState };
     default:
       return state;
   }

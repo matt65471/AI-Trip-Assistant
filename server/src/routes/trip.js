@@ -24,4 +24,24 @@ router.post('/refine', async (req, res) => {
   }
 });
 
+router.post('/generate-slot', async (req, res) => {
+  try {
+    const { requirements, itinerary, dayIndex, slotType, slotIndex } = req.body;
+    if (requirements == null || itinerary == null || dayIndex == null || slotType == null) {
+      return res.status(400).json({ error: 'Missing requirements, itinerary, dayIndex, or slotType' });
+    }
+    const slot = await aiService.generateSlot(
+      requirements,
+      itinerary,
+      dayIndex,
+      slotType,
+      slotIndex ?? 0
+    );
+    res.json(slot);
+  } catch (error) {
+    console.error('Error generating slot:', error);
+    res.status(500).json({ error: 'Failed to generate slot' });
+  }
+});
+
 module.exports = router;

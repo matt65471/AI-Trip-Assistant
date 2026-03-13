@@ -30,6 +30,24 @@ export async function generateItinerary(requirements) {
   return handleResponse(response);
 }
 
+export async function generateSlot(requirements, itinerary, dayIndex, slotType, slotIndex = 0) {
+  const response = await fetch(`${API_BASE}/trip/generate-slot`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      requirements,
+      itinerary,
+      dayIndex,
+      slotType,
+      slotIndex,
+    }),
+  });
+
+  return handleResponse(response);
+}
+
 export async function refineItinerary(itinerary, feedback) {
   if (!feedback.trim()) {
     throw new Error('Please provide feedback for the changes you want');
@@ -44,6 +62,24 @@ export async function refineItinerary(itinerary, feedback) {
   });
 
   return handleResponse(response);
+}
+
+export async function validateLocation(address) {
+  if (!address || !address.trim()) {
+    throw new Error('Address is required');
+  }
+  const response = await fetch(`${API_BASE}/geocode/validate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ address: address.trim() }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to validate location');
+  }
+  return data;
 }
 
 export async function sendChatMessage(message, tripContext, conversationHistory) {

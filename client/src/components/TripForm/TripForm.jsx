@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTrip, useTripDispatch } from '../../context/TripContext';
-import { generateItinerary } from '../../services/api';
+import { buildItinerarySkeleton } from '../../utils/itinerarySkeleton';
+import { validateLocation } from '../../services/api';
 import DestinationStep from './DestinationStep';
 import DatesStep from './DatesStep';
 import PreferencesStep from './PreferencesStep';
@@ -36,22 +37,32 @@ export default function TripForm() {
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
-
+    const start = (requirements.startingLocation || '').trim();
+    if (!start) {
+      dispatch({ type: 'SET_ERROR', payload: 'Please enter your starting location.' });
+      return;
+    }
+    setIsSubmitting(true);
     try {
-      const itinerary = await generateItinerary(requirements);
-      dispatch({ type: 'SET_ITINERARY', payload: itinerary });
-      dispatch({
-        type: 'ADD_CHAT_MESSAGE',
-        payload: {
-          role: 'assistant',
-          content: `I've created your trip itinerary to ${requirements.destinations.join(', ')}! Take a look at the plan on the left. Feel free to ask me any questions or request changes.`
-        }
+      const { valid, formattedAddress } = await validateLocation(start);
+      if (!valid || !formattedAddress) {
+        dispatch({ type: 'SET_ERROR', payload: 'We couldn\'t find that starting location. Please check the name.' });
+        return;
+      }
+      dispatch({ type: 'SET_REQUIREMENTS', payload: { startingLocation: formattedAddress } });
+      const skeleton = buildItinerarySkeleton({
+        ...requirements,
+        startingLocation: formattedAddress
       });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      if (!skeleton) {
+        dispatch({ type: 'SET_ERROR', payload: 'Please check your dates and destinations.' });
+        return;
+      }
+      dispatch({ type: 'SET_ITINERARY', payload: skeleton });
+      dispatch({ type: 'SET_ITINERARY_BUILDING', payload: true });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Failed to validate starting location.' });
     } finally {
       setIsSubmitting(false);
     }

@@ -139,12 +139,16 @@ export default function TravelersStep() {
               {requirements.budget.charAt(0).toUpperCase() + requirements.budget.slice(1)}
             </li>
             <li>
-              <span className="font-medium">Travel:</span>{' '}
-              {requirements.travelMethod.charAt(0).toUpperCase() + requirements.travelMethod.slice(1)}
+              <span className="font-medium">To destination:</span>{' '}
+              {(requirements.travelToDestination || []).map((m) => m.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())).join(', ')}
+            </li>
+            <li>
+              <span className="font-medium">At destination:</span>{' '}
+              {(requirements.travelAtDestination || []).map((m) => m.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())).join(', ')}
             </li>
             <li>
               <span className="font-medium">Stay:</span>{' '}
-              {requirements.accommodation.charAt(0).toUpperCase() + requirements.accommodation.slice(1)}
+              {(requirements.accommodations || []).map((a) => a.charAt(0).toUpperCase() + a.slice(1)).join(', ')}
             </li>
             <li>
               <span className="font-medium">Travelers:</span> {count}

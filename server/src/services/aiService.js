@@ -21,16 +21,20 @@ When generating itineraries or suggestions:
 Always be helpful, informative, and considerate of the user's preferences and constraints.`;
 
 async function generateItinerary(tripRequirements) {
-  const { startingLocation, destinations, startDate, endDate, budget, travelMethod, accommodation, travelers } = tripRequirements;
-  
+  const { startingLocation, destinations, startDate, endDate, budget, travelToDestination, travelAtDestination, accommodations, travelers } = tripRequirements;
+  const toDestStr = Array.isArray(travelToDestination) ? travelToDestination.join(', ') : travelToDestination || 'flight';
+  const atDestStr = Array.isArray(travelAtDestination) ? travelAtDestination.join(', ') : travelAtDestination || 'walking, public transit';
+  const accommodationsStr = Array.isArray(accommodations) ? accommodations.join(', ') : accommodations || 'hotel';
+
   const prompt = `Create a detailed day-by-day travel itinerary based on these requirements:
 
 Starting location (departure city): ${startingLocation || 'Not specified'}
 Destinations: ${Array.isArray(destinations) ? destinations.join(', ') : destinations}
 Travel Dates: ${startDate} to ${endDate}
 Budget Level: ${budget}
-Travel Method: ${travelMethod}
-Accommodation Preference: ${accommodation}
+How they get TO the destination(s) (e.g. flight, train): ${toDestStr}
+How they want to get AROUND at the destination (e.g. walking, public transit, taxi): ${atDestStr}
+Accommodation Preferences (types they're open to): ${accommodationsStr}
 Number of Travelers: ${travelers?.count || 1}
 ${travelers?.notes ? `Special Notes: ${travelers.notes}` : ''}
 
@@ -164,8 +168,77 @@ async function chat(message, tripContext, conversationHistory = []) {
   }
 }
 
+/**
+ * Generate a single slot (accommodation, activity, meal, or transportation) for one day.
+ * Uses trip context and current itinerary state so suggestions are coherent.
+ */
+async function generateSlot(tripRequirements, itinerary, dayIndex, slotType, slotIndex = 0) {
+  const day = itinerary?.days?.[dayIndex];
+  if (!day) throw new Error('Invalid day index');
+
+  const { budget, travelers } = tripRequirements;
+  const location = day.location;
+  const date = day.date;
+  const dayNum = day.day;
+
+  const slotDescriptions = {
+    accommodation: 'hotel/accommodation to stay at',
+    activity: ['morning', 'midday', 'afternoon'][slotIndex] || 'activity',
+    meal: ['breakfast', 'lunch', 'dinner'][slotIndex] || 'meal',
+    transportation: 'transportation for getting around'
+  };
+  const slotLabel = slotType === 'activity' || slotType === 'meal'
+    ? `${slotDescriptions[slotType]}`
+    : slotDescriptions[slotType];
+
+  const existingContext = [];
+  if (day.accommodation && slotType !== 'accommodation') {
+    existingContext.push(`Staying at: ${day.accommodation.name}`);
+  }
+  if (day.activities?.length) {
+    const filled = day.activities.filter(Boolean).map(a => a.title);
+    if (filled.length) existingContext.push(`Already planned: ${filled.join(', ')}`);
+  }
+  if (day.meals?.filter(Boolean).length) {
+    const filled = day.meals.filter(Boolean).map(m => `${m.type}: ${m.suggestion}`);
+    existingContext.push(`Meals so far: ${filled.join('; ')}`);
+  }
+
+  const prompt = `You are suggesting one specific item for a travel itinerary.
+
+Trip context: ${tripRequirements.destinations?.join(', ')}. Budget: ${budget}. Travelers: ${travelers?.count || 1}.
+
+For Day ${dayNum} (${date}) in ${location}, suggest a ${slotLabel}. ${existingContext.length ? 'What is already planned this day: ' + existingContext.join('. ') : ''}
+
+Return ONLY valid JSON, no markdown or explanation.
+
+For "accommodation" use: {"name":"...","type":"hotel|hostel|airbnb","estimatedCost":number,"notes":"..."}
+For "activity" use: {"time":"HH:MM","title":"...","description":"...","duration":"...","estimatedCost":number,"location":"...","tips":"..."}
+For "meal" use: {"type":"breakfast|lunch|dinner","suggestion":"...","cuisine":"...","estimatedCost":number}
+For "transportation" use: {"method":"...","notes":"...","estimatedCost":number}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      response_format: { type: 'json_object' }
+    });
+
+    const content = completion.choices[0].message.content;
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('OpenAI API error (generateSlot):', error);
+    throw error;
+  }
+}
+
 module.exports = {
   generateItinerary,
   refineItinerary,
+  generateSlot,
   chat
 };
