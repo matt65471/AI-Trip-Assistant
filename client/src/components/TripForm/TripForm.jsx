@@ -17,6 +17,7 @@ const STEPS = [
 
 export default function TripForm() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { requirements, isLoading, error } = useTrip();
   const dispatch = useTripDispatch();
 
@@ -35,6 +36,7 @@ export default function TripForm() {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
@@ -50,12 +52,14 @@ export default function TripForm() {
       });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const isLastStep = currentStep === STEPS.length - 1;
 
-  if (isLoading) {
+  if (isLoading || isSubmitting) {
     return (
       <div className="bg-white rounded-2xl shadow-xl p-6">
         <LoadingSpinner message="Creating your perfect itinerary..." />
@@ -138,10 +142,10 @@ export default function TripForm() {
         {isLastStep ? (
           <button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
             className="px-8 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {isLoading ? (
+            {(isLoading || isSubmitting) ? (
               <>
                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                   <circle
