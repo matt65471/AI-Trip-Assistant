@@ -21,10 +21,11 @@ When generating itineraries or suggestions:
 Always be helpful, informative, and considerate of the user's preferences and constraints.`;
 
 async function generateItinerary(tripRequirements) {
-  const { destinations, startDate, endDate, budget, travelMethod, accommodation, travelers } = tripRequirements;
+  const { startingLocation, destinations, startDate, endDate, budget, travelMethod, accommodation, travelers } = tripRequirements;
   
   const prompt = `Create a detailed day-by-day travel itinerary based on these requirements:
 
+Starting location (departure city): ${startingLocation || 'Not specified'}
 Destinations: ${Array.isArray(destinations) ? destinations.join(', ') : destinations}
 Travel Dates: ${startDate} to ${endDate}
 Budget Level: ${budget}

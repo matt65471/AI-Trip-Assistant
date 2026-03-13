@@ -9,6 +9,9 @@ async function handleResponse(response) {
 }
 
 export async function generateItinerary(requirements) {
+  if (!requirements.startingLocation || !requirements.startingLocation.trim()) {
+    throw new Error('Please enter your starting location');
+  }
   if (!requirements.destinations || requirements.destinations.length === 0) {
     throw new Error('Please add at least one destination');
   }

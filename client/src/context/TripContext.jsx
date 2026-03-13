@@ -5,6 +5,7 @@ const TripDispatchContext = createContext(null);
 
 const initialState = {
   requirements: {
+    startingLocation: '',
     destinations: [],
     startDate: '',
     endDate: '',

@@ -51,8 +51,27 @@ export default function DestinationStep() {
         Where do you want to go?
       </h2>
       <p className="text-gray-600 mb-6">
-        Add one or more destinations for your trip
+        Add your starting location and one or more destinations
       </p>
+
+      {/* Starting location */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Starting location
+        </label>
+        <input
+          type="text"
+          value={requirements.startingLocation || ''}
+          onChange={(e) =>
+            dispatch({
+              type: 'SET_REQUIREMENTS',
+              payload: { startingLocation: e.target.value }
+            })
+          }
+          placeholder="City or airport (e.g. New York, USA)"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+        />
+      </div>
 
       {/* Input field */}
       <div className="relative mb-4">
