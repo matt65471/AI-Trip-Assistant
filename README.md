@@ -21,7 +21,8 @@ An AI-powered trip planning assistant that helps you create personalized travel 
 
 - Node.js 18+
 - OpenAI API key
-- Google Geocoding API key (for starting location and destination validation). Enable the Geocoding API in [Google Cloud Console](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com).
+- Google Geocoding API key (for location validation). Enable the Geocoding API in [Google Cloud Console](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com).
+- Amadeus API key (for flight search). Create a free account at [Amadeus for Developers](https://developers.amadeus.com/) and get your Client ID and Secret.
 
 ### Installation
 
@@ -48,7 +49,9 @@ cd server
 cp .env.example .env
 # Edit .env and add:
 # - OPENAI_API_KEY=your-openai-key
-# - GOOGLE_GEOCODING_API_KEY=your-google-geocoding-key  (for location validation)
+# - GOOGLE_GEOCODING_API_KEY=your-google-geocoding-key
+# - AMADEUS_CLIENT_ID=your-amadeus-client-id
+# - AMADEUS_CLIENT_SECRET=your-amadeus-client-secret
 ```
 
 4. Start the development servers:
@@ -95,6 +98,8 @@ AI-Trip-Assistant/
 | `/api/trip/generate-slot` | POST | Generate a single itinerary slot (activity, meal, etc.) |
 | `/api/geocode/validate` | POST | Validate a location via Google Geocoding (body: `{ address }`) |
 | `/api/geocode/coordinates` | POST | Get lat/lng for multiple places for map (body: `{ places: string[] }`) |
+| `/api/route` | POST | Get driving route and travel times via OSRM (body: `{ waypoints: [{ lat, lng, place? }] }`) |
+| `/api/flights/search` | POST | Search flights via Amadeus (body: `{ originLocation, destinationLocation, departureDate, adults?, sortBy? }`) |
 | `/api/chat` | POST | Send message to AI assistant |
 | `/api/trip/refine` | POST | Update itinerary based on feedback |
 

@@ -19,8 +19,14 @@ const TRAVEL_AT_DESTINATION = [
   { value: 'public_transit', label: 'Public transit', icon: '🚇' },
   { value: 'taxi_rideshare', label: 'Taxi / Rideshare', icon: '🚕' },
   { value: 'rental_car', label: 'Rental car', icon: '🚗' },
+  { value: 'own_vehicle', label: 'Own Vehicle', icon: '🚙' },
   { value: 'bike', label: 'Bike / Scooter', icon: '🚲' },
   { value: 'tour_bus', label: 'Tour bus / Guided', icon: '🚌' },
+];
+
+const CAR_ROAD_TRIP_AT_DESTINATION = [
+  { value: 'rental_car', label: 'Rental Car', icon: '🚗' },
+  { value: 'own_vehicle', label: 'Own Vehicle', icon: '🚙' },
 ];
 
 const ACCOMMODATION_OPTIONS = [
@@ -114,31 +120,44 @@ export default function PreferencesStep() {
           How do you want to get around at the destination? (select all that apply)
         </label>
         <div className="flex flex-wrap gap-2">
-          {TRAVEL_AT_DESTINATION.map((option) => {
-            const selected = (requirements.travelAtDestination || []).includes(option.value);
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  const current = requirements.travelAtDestination || [];
-                  const next = selected
-                    ? current.filter((v) => v !== option.value)
-                    : [...current, option.value];
-                  handleChange('travelAtDestination', next.length ? next : current);
-                }}
-                className={`px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 ${
-                  selected
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                }`}
-              >
-                <span>{option.icon}</span>
-                <span className="font-medium">{option.label}</span>
-              </button>
-            );
-          })}
+          {(() => {
+            const isCarRoadTrip = (requirements.travelToDestination || []).includes('car');
+            const options = isCarRoadTrip ? CAR_ROAD_TRIP_AT_DESTINATION : TRAVEL_AT_DESTINATION;
+            const allowedValues = isCarRoadTrip ? ['rental_car', 'own_vehicle'] : null;
+            return options.map((option) => {
+              const selected = (requirements.travelAtDestination || []).includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    const current = requirements.travelAtDestination || [];
+                    const filtered = allowedValues
+                      ? current.filter((v) => allowedValues.includes(v))
+                      : current;
+                    const next = selected
+                      ? filtered.filter((v) => v !== option.value)
+                      : [...filtered, option.value];
+                    handleChange('travelAtDestination', next.length ? next : (allowedValues ? [] : current));
+                  }}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 ${
+                    selected
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  <span>{option.icon}</span>
+                  <span className="font-medium">{option.label}</span>
+                </button>
+              );
+            });
+          })()}
         </div>
+        {(requirements.travelToDestination || []).includes('car') && (
+          <p className="mt-2 text-sm text-gray-500">
+            For Car/Road Trip you can only choose Rental Car or Own Vehicle at the destination.
+          </p>
+        )}
       </div>
 
       {/* Accommodations (multi-select) */}

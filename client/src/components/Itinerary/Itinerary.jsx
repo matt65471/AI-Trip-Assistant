@@ -3,6 +3,7 @@ import { useTrip, useTripDispatch } from '../../context/TripContext';
 import DayCard from './DayCard';
 import ItinerarySummary from './ItinerarySummary';
 import TripMap from './TripMap';
+import FlightSearch from './FlightSearch';
 
 export default function Itinerary() {
   const { itinerary, requirements } = useTrip();
@@ -37,6 +38,22 @@ export default function Itinerary() {
         <ItinerarySummary itinerary={itinerary} />
       </div>
 
+      {/* Flight search - only if user chose flight */}
+      {(requirements.travelToDestination || []).includes('flight') && (
+        <div className="bg-white rounded-2xl shadow-xl p-6">
+          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">✈️</span>
+            Flight options
+          </h3>
+          <FlightSearch
+            originLocation={requirements.startingLocation}
+            destinationLocation={requirements.destinations?.[0]}
+            departureDate={requirements.startDate}
+            adults={requirements.travelers?.count || 1}
+          />
+        </div>
+      )}
+
       {/* Trip map */}
       <div className="bg-white rounded-2xl shadow-xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -46,6 +63,7 @@ export default function Itinerary() {
         <TripMap
           startingLocation={requirements.startingLocation}
           destinations={requirements.destinations}
+          height={420}
         />
       </div>
 

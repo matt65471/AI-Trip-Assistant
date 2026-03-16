@@ -187,7 +187,7 @@ export default function ItineraryBuilder() {
         <TripMap
           startingLocation={requirements.startingLocation}
           destinations={requirements.destinations}
-          height={200}
+          height={260}
         />
       </div>
       <div className="flex justify-between items-center">

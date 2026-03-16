@@ -78,6 +78,32 @@ export async function getPlaceCoordinates(places) {
   return response.json();
 }
 
+export async function searchFlights({ originLocation, destinationLocation, departureDate, adults = 1, sortBy = 'price' }) {
+  const response = await fetch(`${API_BASE}/flights/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      originLocation,
+      destinationLocation,
+      departureDate,
+      adults,
+      sortBy,
+    }),
+  });
+  return handleResponse(response);
+}
+
+export async function getRoute(waypoints) {
+  if (!Array.isArray(waypoints) || waypoints.length < 2) return null;
+  const response = await fetch(`${API_BASE}/route`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ waypoints }),
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
 export async function validateLocation(address) {
   if (!address || !address.trim()) {
     throw new Error('Address is required');
