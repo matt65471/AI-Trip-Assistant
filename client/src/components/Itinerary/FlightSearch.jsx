@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { searchFlights } from '../../services/api';
+import { searchFlights, getDestinationAirports } from '../../services/api';
 
 function parseDuration(iso) {
   const match = iso?.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
@@ -18,6 +18,12 @@ function formatTime(isoStr) {
 }
 
 export default function FlightSearch({ originLocation, destinationLocation, departureDate, adults = 1 }) {
+  const [destinationAirports, setDestinationAirports] = useState([]);
+  const [airportsLoading, setAirportsLoading] = useState(false);
+  const [airportsError, setAirportsError] = useState(null);
+  const [selectedDestinationAirport, setSelectedDestinationAirport] = useState(null);
+  const [useCityFallback, setUseCityFallback] = useState(false);
+
   const [offers, setOffers] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,6 +32,7 @@ export default function FlightSearch({ originLocation, destinationLocation, depa
   const [destCode, setDestCode] = useState('');
 
   const canSearch = originLocation && destinationLocation && departureDate;
+  const hasChosenDestination = selectedDestinationAirport || useCityFallback;
 
   const doSearch = async (sortBy = 'price') => {
     if (!canSearch) return;
@@ -38,6 +45,7 @@ export default function FlightSearch({ originLocation, destinationLocation, depa
         departureDate,
         adults,
         sortBy,
+        destinationAirportCode: selectedDestinationAirport?.iataCode,
       });
       setOffers(result.offers || []);
       setOriginCode(result.originCode || '');
@@ -56,9 +64,28 @@ export default function FlightSearch({ originLocation, destinationLocation, depa
   };
 
   useEffect(() => {
-    if (canSearch) doSearch('price');
+    if (!canSearch || !destinationLocation) return;
+    setAirportsLoading(true);
+    setAirportsError(null);
+    setDestinationAirports([]);
+    setSelectedDestinationAirport(null);
+    setUseCityFallback(false);
+    getDestinationAirports(destinationLocation)
+      .then((list) => {
+        setDestinationAirports(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        setAirportsError(err.message || 'Failed to load airports');
+        setDestinationAirports([]);
+      })
+      .finally(() => setAirportsLoading(false));
+  }, [destinationLocation, canSearch]);
+
+  useEffect(() => {
+    if (!hasChosenDestination || !canSearch) return;
+    doSearch('price');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originLocation, destinationLocation, departureDate, adults]);
+  }, [selectedDestinationAirport?.iataCode, useCityFallback, originLocation, destinationLocation, departureDate, adults]);
 
   if (!canSearch) {
     return (
@@ -68,20 +95,89 @@ export default function FlightSearch({ originLocation, destinationLocation, depa
     );
   }
 
+  if (!hasChosenDestination) {
+    return (
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-800">
+          Choose destination airport: {destinationLocation}
+        </h4>
+        {airportsLoading && (
+          <div className="rounded-xl bg-gray-50 p-6 text-center text-gray-500">
+            Loading airports...
+          </div>
+        )}
+        {!airportsLoading && airportsError && (
+          <div className="space-y-2">
+            <p className="text-sm text-red-600">{airportsError}</p>
+            <button
+              type="button"
+              onClick={() => setUseCityFallback(true)}
+              className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg"
+            >
+              Search flights anyway (use city)
+            </button>
+          </div>
+        )}
+        {!airportsLoading && !airportsError && destinationAirports.length === 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">No airports found for this destination.</p>
+            <button
+              type="button"
+              onClick={() => setUseCityFallback(true)}
+              className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg"
+            >
+              Search flights anyway (use city)
+            </button>
+          </div>
+        )}
+        {!airportsLoading && !airportsError && destinationAirports.length > 0 && (
+          <div className="space-y-2 max-h-[280px] overflow-y-auto">
+            <p className="text-sm text-gray-600">Select an airport to see flights:</p>
+            {destinationAirports.map((airport) => (
+              <button
+                key={airport.iataCode}
+                type="button"
+                onClick={() => setSelectedDestinationAirport(airport)}
+                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all"
+              >
+                <span className="font-medium text-gray-800">{airport.name}</span>
+                <span className="ml-2 text-sm text-gray-500">({airport.iataCode})</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h4 className="font-semibold text-gray-800">
-          Flights: {originLocation} → {destinationLocation}
+          Flights: {originLocation} → {selectedDestinationAirport ? `${selectedDestinationAirport.name} (${selectedDestinationAirport.iataCode})` : destinationLocation}
         </h4>
-        <button
-          type="button"
-          onClick={handleFindCheaper}
-          disabled={loading || offers.length === 0}
-          className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Searching...' : 'Find cheaper flights'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedDestinationAirport(null);
+              setUseCityFallback(false);
+              setOffers([]);
+              setError(null);
+            }}
+            className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            Change airport
+          </button>
+          <button
+            type="button"
+            onClick={handleFindCheaper}
+            disabled={loading || offers.length === 0}
+            className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Searching...' : 'Find cheaper flights'}
+          </button>
+        </div>
       </div>
 
       {error && (

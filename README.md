@@ -22,7 +22,8 @@ An AI-powered trip planning assistant that helps you create personalized travel 
 - Node.js 18+
 - OpenAI API key
 - Google Geocoding API key (for location validation). Enable the Geocoding API in [Google Cloud Console](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com).
-- Amadeus API key (for flight search). Create a free account at [Amadeus for Developers](https://developers.amadeus.com/) and get your Client ID and Secret.
+- SerpAPI key (for flight search). Get an API key at [serpapi.com](https://serpapi.com/) (Google Flights API).
+- (Optional) SkyLink via RapidAPI key for airport search by city. Subscribe at [RapidAPI SkyLink](https://rapidapi.com/skylink-api-skylink-api-default/api/skylink-api); if omitted, a built-in list of major cities is used.
 
 ### Installation
 
@@ -50,8 +51,8 @@ cp .env.example .env
 # Edit .env and add:
 # - OPENAI_API_KEY=your-openai-key
 # - GOOGLE_GEOCODING_API_KEY=your-google-geocoding-key
-# - AMADEUS_CLIENT_ID=your-amadeus-client-id
-# - AMADEUS_CLIENT_SECRET=your-amadeus-client-secret
+# - SERPAPI_API_KEY=your-serpapi-key
+# - SKYLINK_RAPIDAPI_KEY=your-rapidapi-key (optional; for airport search by city)
 ```
 
 4. Start the development servers:

@@ -78,7 +78,18 @@ export async function getPlaceCoordinates(places) {
   return response.json();
 }
 
-export async function searchFlights({ originLocation, destinationLocation, departureDate, adults = 1, sortBy = 'price' }) {
+export async function getDestinationAirports(location) {
+  if (!location || !location.trim()) return [];
+  const params = new URLSearchParams({ location: location.trim() });
+  const response = await fetch(`${API_BASE}/flights/airports?${params}`);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to fetch destination airports');
+  }
+  return response.json();
+}
+
+export async function searchFlights({ originLocation, destinationLocation, departureDate, adults = 1, sortBy = 'price', destinationAirportCode }) {
   const response = await fetch(`${API_BASE}/flights/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -88,6 +99,7 @@ export async function searchFlights({ originLocation, destinationLocation, depar
       departureDate,
       adults,
       sortBy,
+      destinationAirportCode,
     }),
   });
   return handleResponse(response);
