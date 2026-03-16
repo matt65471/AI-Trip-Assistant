@@ -1,10 +1,10 @@
 const https = require('https');
 
 const SERPAPI_BASE = 'https://serpapi.com/search';
-const SKYLINK_HOST = 'skylink-api.p.rapidapi.com';
-const SKYLINK_TEXT_SEARCH_PATH = '/v3/airports/search/text';
+const AIRPORT_CODES_HOST = 'www.air-port-codes.com';
+const AIRPORT_CODES_PATH = '/api/v1/autocomplete';
 
-/** Fallback when SkyLink is unavailable or returns no results. Keyword match is case-insensitive. */
+/** Fallback when Air-Port-Codes API is unavailable or returns no results. Keyword match is case-insensitive. */
 const FALLBACK_AIRPORTS_BY_CITY = {
   paris: [
     { iataCode: 'CDG', name: 'Charles de Gaulle Airport' },
@@ -132,14 +132,19 @@ function httpsGet(url) {
   });
 }
 
-function httpsGetWithHeaders(host, path, headers) {
+function httpsPost(host, path, body, headers) {
   return new Promise((resolve, reject) => {
+    const bodyStr = typeof body === 'string' ? body : new URLSearchParams(body).toString();
     const req = https.request(
       {
         host,
         path,
-        method: 'GET',
-        headers: { ...headers },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(bodyStr),
+          ...headers,
+        },
       },
       (res) => {
         let data = '';
@@ -154,43 +159,41 @@ function httpsGetWithHeaders(host, path, headers) {
       }
     );
     req.on('error', reject);
+    req.write(bodyStr);
     req.end();
   });
 }
 
-function getSkyLinkApiKey() {
-  return (process.env.SKYLINK_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY || '').trim();
+function getAirPortCodesApiKey() {
+  return (process.env.AIRPORT_CODES_API_KEY || '').trim();
 }
 
 /**
- * Fetch airports from SkyLink API (RapidAPI) text search. Returns [{ iataCode, name }].
- * Uses large_airport filter. Returns [] if key missing or request fails.
+ * Fetch airports from Air-Port-Codes API autocomplete. Returns [{ iataCode, name }].
+ * Uses size=3 (international and up). Returns [] if key missing or request fails.
  */
-async function fetchAirportsFromSkyLink(keyword) {
-  const apiKey = getSkyLinkApiKey();
+async function fetchAirportsFromAirPortCodes(keyword) {
+  const apiKey = getAirPortCodesApiKey();
   if (!apiKey) return [];
-  const q = (keyword || '').toString().trim().split(',')[0]?.trim() || (keyword || '').toString().trim();
-  if (!q || q.length < 2) return [];
+  const term = (keyword || '').toString().trim().split(',')[0]?.trim() || (keyword || '').toString().trim();
+  if (!term || term.length < 2) return [];
   try {
-    const path = `${SKYLINK_TEXT_SEARCH_PATH}?${new URLSearchParams({
-      q,
-      limit: '20',
-      type: 'large_airport',
-    })}`;
-    const data = await httpsGetWithHeaders(SKYLINK_HOST, path, {
-      'X-RapidAPI-Key': apiKey,
-      'X-RapidAPI-Host': SKYLINK_HOST,
-    });
-    const list = data.airports || [];
-    if (!Array.isArray(list)) return [];
-    return list
-      .filter((a) => a.iata_code && String(a.iata_code).length === 3)
+    const body = { term, limit: 20, size: 3 };
+    const data = await httpsPost(
+      AIRPORT_CODES_HOST,
+      AIRPORT_CODES_PATH,
+      body,
+      { 'APC-Auth': apiKey }
+    );
+    if (!data.status || !Array.isArray(data.airports)) return [];
+    return data.airports
+      .filter((a) => a.iata && String(a.iata).length === 3)
       .map((a) => ({
-        iataCode: String(a.iata_code).toUpperCase(),
-        name: a.name || a.iata_code || '',
+        iataCode: String(a.iata).toUpperCase(),
+        name: a.name || a.iata || '',
       }));
   } catch (err) {
-    console.error('SkyLink airport search error:', err.message);
+    console.error('Air-Port-Codes airport search error:', err.message);
     return [];
   }
 }
@@ -206,29 +209,28 @@ function getAirportsByCity(keyword) {
 
 /**
  * Get list of airports for a location (e.g. "Paris, France" -> CDG, ORY, ...).
- * Tries SkyLink text search first; falls back to built-in list if unavailable or no results.
+ * Tries Air-Port-Codes API first; falls back to built-in list if unavailable or no results.
  */
 async function getAirportsNearLocation(locationStr) {
   const keyword = (locationStr.split(',')[0]?.trim() || locationStr).trim();
-  const fromSkyLink = await fetchAirportsFromSkyLink(keyword);
-  if (fromSkyLink.length > 0) return fromSkyLink;
+  const fromApi = await fetchAirportsFromAirPortCodes(keyword);
+  if (fromApi.length > 0){
+    console.log('fromApi', fromApi);
+    return fromApi;
+  }
+  console.log('getAirportsByCity', getAirportsByCity(keyword));
   return getAirportsByCity(keyword);
 }
 
 /**
  * Get IATA airport code from a location string (e.g. "Paris, France" -> "CDG").
- * Tries SkyLink text search first; falls back to built-in list if unavailable or no results.
+ * Tries Air-Port-Codes API first; falls back to built-in list if unavailable or no results.
  */
 async function getAirportCode(locationStr) {
   const keyword = (locationStr.split(',')[0]?.trim() || locationStr).trim();
-  const fromSkyLink = await fetchAirportsFromSkyLink(keyword);
-  if (fromSkyLink.length > 0){
-    console.log('fromSkyLink', fromSkyLink);
-    return fromSkyLink[0].iataCode;
-  }
-  console.log('keyword', fromSkyLink);
+  const fromApi = await fetchAirportsFromAirPortCodes(keyword);
+  if (fromApi.length > 0) return fromApi[0].iataCode;
   const airports = getAirportsByCity(keyword);
-  console.log('airports', airports);
   return airports.length > 0 ? airports[0].iataCode : null;
 }
 

@@ -23,7 +23,7 @@ An AI-powered trip planning assistant that helps you create personalized travel 
 - OpenAI API key
 - Google Geocoding API key (for location validation). Enable the Geocoding API in [Google Cloud Console](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com).
 - SerpAPI key (for flight search). Get an API key at [serpapi.com](https://serpapi.com/) (Google Flights API).
-- (Optional) SkyLink via RapidAPI key for airport search by city. Subscribe at [RapidAPI SkyLink](https://rapidapi.com/skylink-api-skylink-api-default/api/skylink-api); if omitted, a built-in list of major cities is used.
+- (Optional) Air-Port-Codes API key for airport search by city. Get a free key at [air-port-codes.com](https://www.air-port-codes.com/); if omitted, a built-in list of major cities is used.
 
 ### Installation
 
@@ -52,7 +52,7 @@ cp .env.example .env
 # - OPENAI_API_KEY=your-openai-key
 # - GOOGLE_GEOCODING_API_KEY=your-google-geocoding-key
 # - SERPAPI_API_KEY=your-serpapi-key
-# - SKYLINK_RAPIDAPI_KEY=your-rapidapi-key (optional; for airport search by city)
+# - AIRPORT_CODES_API_KEY=your-air-port-codes-key (optional; for airport search by city)
 ```
 
 4. Start the development servers:
